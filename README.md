@@ -763,3 +763,36 @@ Once the hardware is done, you can go back to [linorobot2](https://github.com/li
 ### 9. The robot rotates after braking
 - This happens due to the same reason as 7. When the motor hits its maximum rpm and fails to reach the target velocity, the PID controller's error continously increases. The abrupt turning motion is due to the PID controller's attempt to further compensate the accumulated error. To fix this, set the `MAX_RPM_RATIO` lower to allow the PID controller to compensate for errors while moving to avoid huge accumulative errors when the robot stops.
 
+
+---
+
+# Robofoundry fixes specific to ESP32-WROOM-32D 38 PIN BOARD to compile and run microROS
+
+#### 1. Add a new robot config file under config/custom/myrobot_config.h
+- This has pin numbers for all four encoders and motors corrected, without this fix esp32 will keep rebooting with errors
+- Before you compile and run the project make sure to change "WIFI_SSID" and "WIFI_PASSWORD" with correct values for your wifi network
+- Also, don't forget to change the ip address of your laptop or computer [which will also be microROS agent IP] in myrobot_config.h file in following two places:
+    - AGENT_IP
+    - SYSLOG_SERVER
+
+#### 2. Fix platform.ini file and added myrobot env section
+- This new section passes correct flags e.g. for wifi transport and new myrobot config file. Removed all other board envs except default teensy and new myrobot env.
+- It also fixes issue with compile errors related to ESP32Servo with correct version of library
+
+#### 3. Fix default_motor.h to use ESP32Servo.h instead of Servo.h
+
+
+#### 4. Run following commands to compile and run the esp32 based robot using microROS
+
+- To compile and upload the project
+```
+pio run --target upload -e myrobot
+```
+- To start docker based microROS agent
+ ```
+ docker run -it --rm --net=host microros/micro-ros-agent:humble udp4 --port 8888 -v6
+```
+- In another separate terminal you can run following ROS2 command to make sure the linorobot topics are getting published over wifi from esp32
+```
+ros2 topic list
+```
