@@ -23,6 +23,9 @@
 
 #define USE_GENERIC_2_IN_MOTOR_DRIVER 
 
+#define USE_MPU6050_IMU
+#define SDA_PIN 21 // specify I2C pins for esp32
+#define SCL_PIN 22
 
 #define K_P 0.6                             
 #define K_I 0.8                             
@@ -44,8 +47,8 @@
 
 // Fixed pin numbers for ESP32-WROOM-32D 38 PIN VERSION
 /// ENCODER PINS
-#define MOTOR1_ENCODER_A 23
-#define MOTOR1_ENCODER_B 22 
+#define MOTOR1_ENCODER_A 5
+#define MOTOR1_ENCODER_B 17 
 #define MOTOR1_ENCODER_INV false 
 
 #define MOTOR2_ENCODER_A 19
