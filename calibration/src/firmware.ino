@@ -123,6 +123,8 @@ void sampleMotors(bool show_summary)
         {
             if(micros() - start_time >= SAMPLE_TIME * 1000000)
             {
+                //Serial.println("STOP");
+
                 motors[i]->spin(0);
                 Serial.println("");
                 break;
@@ -133,7 +135,7 @@ void sampleMotors(bool show_summary)
                 last_status = micros();
                 Serial.print(".");
             }
-
+            delay(1);   //Fix: without this small delay the motors don't spin
             motors[i]->spin(PWM_MAX);
         }
         
