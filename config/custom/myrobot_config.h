@@ -18,29 +18,29 @@
 #define LED_PIN 13 
 #define ESP32
 #define SOC_PCNT_SUPPORTED
+#define BAUDRATE 115200
+#define LINO_BASE DIFFERENTIAL_DRIVE 
 
-#define LINO_BASE SKID_STEER 
-
-#define USE_GENERIC_1_IN_MOTOR_DRIVER 
+#define USE_GENERIC_2_IN_MOTOR_DRIVER 
 
 
 #define K_P 0.6                             
 #define K_I 0.8                             
 #define K_D 0.5                             
 
-#define MOTOR_MAX_RPM 140       
-#define MAX_RPM_RATIO 0.85
-#define MOTOR_OPERATING_VOLTAGE 24
+#define MOTOR_MAX_RPM 300       
+#define MAX_RPM_RATIO 0.50
+#define MOTOR_OPERATING_VOLTAGE 12
 #define MOTOR_POWER_MAX_VOLTAGE 12
 #define MOTOR_POWER_MEASURED_VOLTAGE 12                  
-#define COUNTS_PER_REV1 144000
-#define COUNTS_PER_REV2 144000
-#define COUNTS_PER_REV3 144000
-#define COUNTS_PER_REV4 144000
+#define COUNTS_PER_REV1 438
+#define COUNTS_PER_REV2 446
+#define COUNTS_PER_REV3 240
+#define COUNTS_PER_REV4 240
 #define WHEEL_DIAMETER 0.152               
 #define LR_WHEELS_DISTANCE 0.271            
 #define PWM_BITS 8                         
-#define PWM_FREQUENCY 20000
+#define PWM_FREQUENCY 5000
 
 // Fixed pin numbers for ESP32-WROOM-32D 38 PIN VERSION
 /// ENCODER PINS
@@ -61,14 +61,14 @@
 #define MOTOR4_ENCODER_INV false 
 
 // Motor Pins
-#define MOTOR1_PWM 14
-#define MOTOR1_IN_A 27
-#define MOTOR1_IN_B -1 
-#define MOTOR1_INV false
+#define MOTOR1_PWM 12
+#define MOTOR1_IN_A 14
+#define MOTOR1_IN_B 27 
+#define MOTOR1_INV true
 
-#define MOTOR2_PWM 25
-#define MOTOR2_IN_A 26
-#define MOTOR2_IN_B -1 
+#define MOTOR2_PWM 26
+#define MOTOR2_IN_A 25
+#define MOTOR2_IN_B 33 
 #define MOTOR2_INV true
 
 #define MOTOR3_PWM 32
