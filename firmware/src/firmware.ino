@@ -415,6 +415,7 @@ void moveBase()
 
         digitalWrite(LED_PIN, HIGH);
     }
+    
     // get the required rpm for each motor based on required velocities, and base used
     Kinematics::rpm req_rpm = kinematics.getRPM(
         twist_msg.linear.x, 
@@ -428,12 +429,18 @@ void moveBase()
     float current_rpm3 = motor3_encoder.getRPM();
     float current_rpm4 = motor4_encoder.getRPM();
 
-    // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
-    // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
-    motor1_controller.spin(motor1_pid.compute(req_rpm.motor1, current_rpm1));
-    motor2_controller.spin(motor2_pid.compute(req_rpm.motor2, current_rpm2));
-    motor3_controller.spin(motor3_pid.compute(req_rpm.motor3, current_rpm3));
-    motor4_controller.spin(motor4_pid.compute(req_rpm.motor4, current_rpm4));
+    if(twist_msg.linear.x == 0.0 && twist_msg.angular.z == 0.0){
+        fullStop();
+
+    }else{
+
+        // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
+        // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
+        motor1_controller.spin(motor1_pid.compute(req_rpm.motor1, current_rpm1));
+        motor2_controller.spin(motor2_pid.compute(req_rpm.motor2, current_rpm2));
+        motor3_controller.spin(motor3_pid.compute(req_rpm.motor3, current_rpm3));
+        motor4_controller.spin(motor4_pid.compute(req_rpm.motor4, current_rpm4));
+    }
 
     Kinematics::velocities current_vel = kinematics.getVelocities(
         current_rpm1, 
