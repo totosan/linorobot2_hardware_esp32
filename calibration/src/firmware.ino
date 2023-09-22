@@ -13,17 +13,30 @@
 // limitations under the License.
 
 #include <Arduino.h>
+#include <micro_ros_platformio.h>
+#include <stdio.h>
+
+#include <nav_msgs/msg/odometry.h>
+#include <sensor_msgs/msg/imu.h>
+#include <sensor_msgs/msg/magnetic_field.h>
+#include <sensor_msgs/msg/battery_state.h>
+#include <sensor_msgs/msg/range.h>
+#include <geometry_msgs/msg/twist.h>
+#include <geometry_msgs/msg/vector3.h>
 #include "config.h"
 #include "motor.h"
+#include "pid.h"
+
 #define ENCODER_USE_INTERRUPTS
 #define ENCODER_OPTIMIZE_INTERRUPTS
+
 #include "encoder.h"
 #include "kinematics.h"
 
 #ifndef BAUDRATE
 #define BAUDRATE 9600
 #endif
-#define SAMPLE_TIME 10 //s
+#define SAMPLE_TIME 10 // s
 
 Encoder motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, COUNTS_PER_REV1, MOTOR1_ENCODER_INV);
 Encoder motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, COUNTS_PER_REV2, MOTOR2_ENCODER_INV);
@@ -35,20 +48,25 @@ Motor motor2_controller(PWM_FREQUENCY, PWM_BITS, MOTOR2_INV, MOTOR2_PWM, MOTOR2_
 Motor motor3_controller(PWM_FREQUENCY, PWM_BITS, MOTOR3_INV, MOTOR3_PWM, MOTOR3_IN_A, MOTOR3_IN_B);
 Motor motor4_controller(PWM_FREQUENCY, PWM_BITS, MOTOR4_INV, MOTOR4_PWM, MOTOR4_IN_A, MOTOR4_IN_B);
 
+PID motor1_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
+PID motor2_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
+PID motor3_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
+PID motor4_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
+
 Kinematics kinematics(
-    Kinematics::LINO_BASE, 
-    MOTOR_MAX_RPM, 
-    MAX_RPM_RATIO, 
-    MOTOR_OPERATING_VOLTAGE, 
-    MOTOR_POWER_MAX_VOLTAGE, 
-    WHEEL_DIAMETER, 
-    LR_WHEELS_DISTANCE
-);
+    Kinematics::LINO_BASE,
+    MOTOR_MAX_RPM,
+    MAX_RPM_RATIO,
+    MOTOR_OPERATING_VOLTAGE,
+    MOTOR_POWER_MAX_VOLTAGE,
+    WHEEL_DIAMETER,
+    LR_WHEELS_DISTANCE);
 
 long long int counts_per_rev[4];
 int total_motors = 4;
 Motor *motors[4] = {&motor1_controller, &motor2_controller, &motor3_controller, &motor4_controller};
 Encoder *encoders[4] = {&motor1_encoder, &motor2_encoder, &motor3_encoder, &motor4_encoder};
+PID *pids[4] = {&motor1_pid, &motor2_pid, &motor3_pid, &motor4_pid};
 String labels[4] = {"FRONT LEFT - M1: ", "FRONT RIGHT - M2: ", "REAR LEFT - M3: ", "REAR RIGHT - M4: "};
 
 void setup()
@@ -58,7 +76,8 @@ void setup()
 #endif
 
     Serial.begin(BAUDRATE);
-    while (!Serial) {
+    while (!Serial)
+    {
     }
     Serial.println("Sampling process will spin the motors at its maximum RPM.");
     Serial.println("Please ensure that the robot is ELEVATED and there are NO OBSTRUCTIONS to the wheels.");
@@ -75,33 +94,110 @@ void loop()
 
     while (Serial.available())
     {
-        char character = Serial.read(); 
-        cmd.concat(character); 
+        char character = Serial.read();
+        cmd.concat(character);
         Serial.print(character);
         delay(1);
-        if(character == '\r' and cmd.equals("spin\r"))
+        if (character == '\r' and cmd.equals("spin\r"))
         {
             cmd = "";
             Serial.println("\r\n");
             sampleMotors(0);
         }
-        else if(character == '\r' and cmd.equals("sample\r"))
+        else if (character == '\r' and cmd.equals("sample\r"))
         {
             cmd = "";
             Serial.println("\r\n");
             sampleMotors(1);
         }
-        else if(character == '\r')
+        else if (character == '\r' and cmd.equals("test\r"))
+        {
+            cmd = "";
+            Serial.println("\r\n");
+            testMotorsWithCmdVel();
+        }
+        else if (character == '\r')
         {
             Serial.println("");
             cmd = "";
         }
     }
 }
+void testMotorsWithCmdVel()
+{
+    if (Kinematics::LINO_BASE == Kinematics::DIFFERENTIAL_DRIVE)
+    {
+        total_motors = 2;
+    }
+    geometry_msgs__msg__Twist twist_msg;
+    // set test twist message with x=0.5 fwd full speed
+    twist_msg.linear.x = 0.5;
+    twist_msg.linear.y = 0.0;
+    twist_msg.angular.z = 0.0;
+    int iteration_time_sec = 15;
+    unsigned long start_time = micros();
+    unsigned long last_status = micros();
+    for (int i = 0; i < total_motors; i++)
+    {
+        while (true)
+        {
+            if (micros() - start_time >= iteration_time_sec * 1000000)
+                {
+                    Serial.println("STOP motor");
+                    motors[i]->brake();
+                    Serial.println("=============");
+                    Serial.println("=============");
+                    start_time = micros();
 
+                    break;
+                }
+
+            // do all speed calculations
+            // get the required rpm for each motor based on required velocities, and base used
+            Kinematics::rpm req_rpm = kinematics.getRPM(
+                twist_msg.linear.x,
+                twist_msg.linear.y,
+                twist_msg.angular.z);
+            float req_rpm_val = 0;
+            switch (i)
+            {
+            case 0:
+                req_rpm_val = req_rpm.motor1;
+                break;
+            case 1:
+                req_rpm_val = req_rpm.motor2;
+                break;
+            case 2:
+                req_rpm_val = req_rpm.motor3;
+                break;
+            case 3:
+                req_rpm_val = req_rpm.motor4;
+                break;
+            default:
+                break;
+            }
+            float current_rpm = encoders[i]->getRPM();
+
+            // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
+            // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
+            Serial.print("req_rpm:: ");
+            Serial.println(req_rpm_val);
+            Serial.print("current_rpm:: ");
+            Serial.println(current_rpm);
+            int pwm = pids[i]->compute(req_rpm_val, current_rpm);
+            Serial.print("pwm:: ");
+            Serial.println(pwm);
+            motors[i]->spin(pwm);
+            delay(100);
+
+            Serial.println("=============");
+
+        }
+    }
+}
 void sampleMotors(bool show_summary)
 {
-    if(Kinematics::LINO_BASE == Kinematics::DIFFERENTIAL_DRIVE)
+    if (Kinematics::LINO_BASE == Kinematics::DIFFERENTIAL_DRIVE)
     {
         total_motors = 2;
     }
@@ -109,8 +205,14 @@ void sampleMotors(bool show_summary)
     float measured_voltage = constrain(MOTOR_POWER_MEASURED_VOLTAGE, 0, MOTOR_OPERATING_VOLTAGE);
     float scaled_max_rpm = ((measured_voltage / MOTOR_OPERATING_VOLTAGE) * MOTOR_MAX_RPM);
     float total_rev = scaled_max_rpm * (SAMPLE_TIME / 60.0);
+    Serial.print("measured voltage:: ");
+    Serial.print(measured_voltage);
+    Serial.print("scaled_max_rpm:: ");
+    Serial.print(scaled_max_rpm);
+    Serial.print("total_rev:: ");
+    Serial.println(total_rev);
 
-    for(int i=0; i<total_motors; i++)
+    for (int i = 0; i < total_motors; i++)
     {
         Serial.print("SPINNING ");
         Serial.print(labels[i]);
@@ -119,29 +221,29 @@ void sampleMotors(bool show_summary)
         unsigned long last_status = micros();
 
         encoders[i]->write(0);
-        while(true)
+        while (true)
         {
-            if(micros() - start_time >= SAMPLE_TIME * 1000000)
+            if (micros() - start_time >= SAMPLE_TIME * 1000000)
             {
-                //Serial.println("STOP");
+                // Serial.println("STOP");
 
                 motors[i]->spin(0);
                 Serial.println("");
                 break;
             }
 
-            if(micros() - last_status >= 1000000)
+            if (micros() - last_status >= 1000000)
             {
                 last_status = micros();
                 Serial.print(".");
             }
-            delay(1);   //Fix: without this small delay the motors don't spin
+            delay(1); // Fix: without this small delay the motors don't spin
             motors[i]->spin(PWM_MAX);
         }
-        
+        // Serial.println("before encoder read");
         counts_per_rev[i] = encoders[i]->read() / total_rev;
     }
-    if(show_summary)
+    if (show_summary)
         printSummary();
 }
 
@@ -170,7 +272,7 @@ void printSummary()
 
     Serial.print(labels[1]);
     Serial.println(counts_per_rev[1]);
-    
+
     Serial.print(labels[2]);
     Serial.print(counts_per_rev[2]);
     Serial.print(" ");
@@ -181,9 +283,9 @@ void printSummary()
 
     Serial.println("====================MAX VELOCITIES====================");
     float max_rpm = kinematics.getMaxRPM();
-    
+
     Kinematics::velocities max_linear = kinematics.getVelocities(max_rpm, max_rpm, max_rpm, max_rpm);
-    Kinematics::velocities max_angular = kinematics.getVelocities(-max_rpm, max_rpm,-max_rpm, max_rpm);
+    Kinematics::velocities max_angular = kinematics.getVelocities(-max_rpm, max_rpm, -max_rpm, max_rpm);
 
     Serial.print("Linear Velocity: +- ");
     Serial.print(max_linear.linear_x);
