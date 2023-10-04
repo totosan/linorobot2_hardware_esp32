@@ -34,9 +34,9 @@
 #include "kinematics.h"
 
 #ifndef BAUDRATE
-#define BAUDRATE 9600
+#define BAUDRATE 115200
 #endif
-#define SAMPLE_TIME 10 // s
+#define SAMPLE_TIME 20 // seconds
 
 Encoder motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, COUNTS_PER_REV1, MOTOR1_ENCODER_INV);
 Encoder motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, COUNTS_PER_REV2, MOTOR2_ENCODER_INV);
@@ -84,6 +84,8 @@ void setup()
     Serial.println("");
     Serial.println("Type 'spin' and press enter to spin the motors.");
     Serial.println("Type 'sample' and press enter to spin the motors with motor summary.");
+    Serial.println("Type 'ticks' and press enter to measure ticks per revolution of the motors.");
+    Serial.println("Type 'test' and press enter to spin the using cmd_vel and observe PID in action.");
     Serial.println("Press enter to clear command.");
     Serial.println("");
 }
@@ -110,6 +112,12 @@ void loop()
             Serial.println("\r\n");
             sampleMotors(1);
         }
+        else if (character == '\r' and cmd.equals("ticks\r"))
+        {
+            cmd = "";
+            Serial.println("\r\n");
+            testMotorForTicksPerRevolution();
+        }
         else if (character == '\r' and cmd.equals("test\r"))
         {
             cmd = "";
@@ -123,6 +131,72 @@ void loop()
         }
     }
 }
+void testMotorForTicksPerRevolution()
+{
+    if (Kinematics::LINO_BASE == Kinematics::DIFFERENTIAL_DRIVE)
+    {
+        total_motors = 2;
+    }
+    int PWM_FOR_TEST = 200;
+    unsigned long start_time = micros();
+    unsigned long last_status = micros();
+    bool show_incremental_tick_count = false;
+    
+
+    Serial.println("Please ensure that the robot is ELEVATED and there are NO OBSTRUCTIONS to the wheels.");
+    Serial.println("ticks test will run each motor at slow speed one motor at a time.");
+    Serial.println("count the number of revolutions visually and make a note of final tick count for each motor along with number of revolutions observed.");
+    Serial.println("Number of ticks for each motor can be calculated with following formula:");
+    Serial.println("ticks per rev = final tick count/number of revolutions counted");
+    Serial.println("Press enter to continue to tick count test.");
+    Serial.println("");
+    char character = Serial.read();
+
+    for (int i = 0; i < total_motors; i++)
+    {
+        Serial.print(labels[i]);
+        while (true)
+        {
+            if (micros() - start_time >= SAMPLE_TIME * 1000000)
+                {
+                    //Serial.println("STOP motor");
+                    motors[i]->brake();
+                    start_time = micros();
+
+                    break;
+                }
+
+
+            // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
+            // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
+            float current_tick_count = encoders[i]->read();
+            // set show_incremental_tick_count = true at beginning of function if you want to print incremental values
+            // otherwise it will only print final total tick count for each motor
+            if(show_incremental_tick_count){
+                Serial.print("current_tick_count:: ");
+                Serial.println(current_tick_count);
+            }else{
+                Serial.print(".");
+
+            }
+            // run the motor with low pwm so it rotates slowly and revolutions can be counted visually
+            // If the motor is rotating too fast change value of PWM_FOR_TEST at beginning of this function
+            int pwm = PWM_FOR_TEST; 
+            motors[i]->spin(pwm);
+            delay(1000);
+
+        }
+        Serial.println("");
+        Serial.print("final_tick_count for ");
+        Serial.print(labels[i]);
+        Serial.print(" = ");
+        float final_tick_count = encoders[i]->read();
+        Serial.println(final_tick_count);
+        Serial.println("=============");
+
+    }
+
+}
 void testMotorsWithCmdVel()
 {
     if (Kinematics::LINO_BASE == Kinematics::DIFFERENTIAL_DRIVE)
@@ -134,18 +208,16 @@ void testMotorsWithCmdVel()
     twist_msg.linear.x = 0.5;
     twist_msg.linear.y = 0.0;
     twist_msg.angular.z = 0.0;
-    int iteration_time_sec = 15;
     unsigned long start_time = micros();
     unsigned long last_status = micros();
     for (int i = 0; i < total_motors; i++)
     {
         while (true)
         {
-            if (micros() - start_time >= iteration_time_sec * 1000000)
+            if (micros() - start_time >= SAMPLE_TIME * 1000000)
                 {
                     Serial.println("STOP motor");
                     motors[i]->brake();
-                    Serial.println("=============");
                     Serial.println("=============");
                     start_time = micros();
 
@@ -181,16 +253,14 @@ void testMotorsWithCmdVel()
             // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
             // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
             Serial.print("req_rpm:: ");
-            Serial.println(req_rpm_val);
-            Serial.print("current_rpm:: ");
-            Serial.println(current_rpm);
+            Serial.print(req_rpm_val);
+            Serial.print(" current_rpm:: ");
+            Serial.print(current_rpm);
             int pwm = pids[i]->compute(req_rpm_val, current_rpm);
-            Serial.print("pwm:: ");
+            Serial.print(" pwm:: ");
             Serial.println(pwm);
             motors[i]->spin(pwm);
             delay(100);
-
-            Serial.println("=============");
 
         }
     }
@@ -205,13 +275,7 @@ void sampleMotors(bool show_summary)
     float measured_voltage = constrain(MOTOR_POWER_MEASURED_VOLTAGE, 0, MOTOR_OPERATING_VOLTAGE);
     float scaled_max_rpm = ((measured_voltage / MOTOR_OPERATING_VOLTAGE) * MOTOR_MAX_RPM);
     float total_rev = scaled_max_rpm * (SAMPLE_TIME / 60.0);
-    Serial.print("measured voltage:: ");
-    Serial.print(measured_voltage);
-    Serial.print("scaled_max_rpm:: ");
-    Serial.print(scaled_max_rpm);
-    Serial.print("total_rev:: ");
-    Serial.println(total_rev);
-
+    
     for (int i = 0; i < total_motors; i++)
     {
         Serial.print("SPINNING ");

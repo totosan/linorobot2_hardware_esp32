@@ -128,9 +128,10 @@ void loop() {
     digitalWrite(LED_PIN, direction ? LOW : HIGH);
     motor1_controller.spin((current_motor == 0) ? (direction ? -pwm_max : pwm_max) : 0);
     motor2_controller.spin((current_motor == 1) ? (direction ? -pwm_max : pwm_max) : 0);
-    motor3_controller.spin((current_motor == 2) ? (direction ? -pwm_max : pwm_max) : 0);
-    motor4_controller.spin((current_motor == 3) ? (direction ? -pwm_max : pwm_max) : 0);
-
+    if(total_motors > 2){
+        motor3_controller.spin((current_motor == 2) ? (direction ? -pwm_max : pwm_max) : 0);
+        motor4_controller.spin((current_motor == 3) ? (direction ? -pwm_max : pwm_max) : 0);
+    }
     delay(1000);
     float current_rpm1 = motor1_encoder.getRPM();
     float current_rpm2 = motor2_encoder.getRPM();

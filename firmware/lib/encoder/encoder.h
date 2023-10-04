@@ -50,7 +50,7 @@ public:
 		}
 		counts_per_rev_ = counts_per_rev;
 		ESP32Encoder::useInternalWeakPullResistors = UP;
-		encoder_.attachHalfQuad(pin1, pin2);
+		encoder_.attachSingleEdge(pin1, pin2);
 	}
 	float getRPM() {
 	        if (counts_per_rev_ < 0) return 0.0;
@@ -67,6 +67,18 @@ public:
 		prev_update_time_ = current_time;
 		prev_encoder_ticks_ = encoder_ticks;
 
+		// double rpm = (delta_ticks / counts_per_rev_) / dtm;
+
+		// Serial.print("delta_ticks:: ");
+        // Serial.println(delta_ticks);
+		// Serial.print("counts_per_rev_:: ");
+        // Serial.println(counts_per_rev_);
+		// Serial.print("delta_time_micros:: ");
+        // Serial.println(dt);
+		// Serial.print("delta_time_mins:: ");
+        // Serial.println(dtm);
+		// Serial.print("rpm:: ");
+        // Serial.println(rpm);
 		return (((double) delta_ticks / counts_per_rev_) / dtm);
 	}
 	inline int32_t read() {
@@ -281,7 +293,7 @@ public:
 		//calculate wheel's speed (RPM)
 		prev_update_time_ = current_time;
 		prev_encoder_ticks_ = encoder_ticks;
-
+        
 		return ((delta_ticks / counts_per_rev_) / dtm);
 	}
 
