@@ -41,18 +41,18 @@
 #define K_D 0.5                             
 
 #define MOTOR_MAX_RPM 160       
-#define MAX_RPM_RATIO 0.9
+#define MAX_RPM_RATIO 0.8
 #define MOTOR_OPERATING_VOLTAGE 6
 #define MOTOR_POWER_MAX_VOLTAGE 6
-#define MOTOR_POWER_MEASURED_VOLTAGE 5.4            
-#define COUNTS_PER_REV1 960
-#define COUNTS_PER_REV2 960
+#define MOTOR_POWER_MEASURED_VOLTAGE 8.2            
+#define COUNTS_PER_REV1 975 //960
+#define COUNTS_PER_REV2 975 //960
 #define COUNTS_PER_REV3 240
 #define COUNTS_PER_REV4 240
-#define WHEEL_DIAMETER 0.152               
-#define LR_WHEELS_DISTANCE 0.271            
+#define WHEEL_DIAMETER 0.0675               
+#define LR_WHEELS_DISTANCE 0.126            
 #define PWM_BITS 8                         
-#define PWM_FREQUENCY 30000
+#define PWM_FREQUENCY 8000
 
 // Fixed pin numbers for ESP32-WROOM-32D 38 PIN VERSION
 /// ENCODER PINS
@@ -94,7 +94,7 @@
 #define MOTOR4_INV false
 
 #define PWM_MAX pow(2, PWM_BITS) - 1
-#define PWM_MIN -PWM_MAX
+#define PWM_MIN -(pow(2, PWM_BITS) - 1)
 #define USE_WIFI_TRANSPORT
 #define AGENT_IP { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define AGENT_PORT 8888
