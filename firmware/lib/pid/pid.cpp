@@ -39,7 +39,7 @@ double PID::compute(float setpoint, float measured_value)
         integral_ = 0;
         derivative_ = 0;
     }
-
+    //printf("\terror %4.2f intergral %4.2f derivative %4.2f \n",kp_* error,ki_* integral_, kd_ *derivative_);
     pid = (kp_ * error) + (ki_ * integral_) + (kd_ * derivative_);
     prev_error_ = error;
 

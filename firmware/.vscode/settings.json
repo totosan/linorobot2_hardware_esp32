@@ -1,0 +1,4 @@
+{
+    "cmake.configureOnOpen": true,
+    "cmake.sourceDirectory": "/home/toto/ros-projects/linorobot2_hardware_hippo_esp32_fix/firmware/.pio/libdeps/myrobot/micro_ros_platformio/ci/extra_packages/my_custom_message"
+}

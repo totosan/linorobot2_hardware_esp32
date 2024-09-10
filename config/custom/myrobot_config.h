@@ -36,75 +36,79 @@
 // #define LIDAR_PORT 8889 // the UDP port on server
 
 
-#define K_P 0.6                             
-#define K_I 0.8                             
-#define K_D 0.5                             
+#define K_P 3.5                             
+#define K_I 2.8                            
+#define K_D 3.0                            
 
-#define MOTOR_MAX_RPM 160       
-#define MAX_RPM_RATIO 0.8
-#define MOTOR_OPERATING_VOLTAGE 6
-#define MOTOR_POWER_MAX_VOLTAGE 6
-#define MOTOR_POWER_MEASURED_VOLTAGE 8.2            
-#define COUNTS_PER_REV1 975 //960
-#define COUNTS_PER_REV2 975 //960
-#define COUNTS_PER_REV3 240
-#define COUNTS_PER_REV4 240
+#define MOTOR_MAX_RPM 100       
+#define MAX_RPM_RATIO 0.95
+#define MOTOR_OPERATING_VOLTAGE 12
+#define MOTOR_POWER_MAX_VOLTAGE 12
+#define MOTOR_POWER_MEASURED_VOLTAGE 12            
+#define COUNTS_PER_REV1 1152
+#define COUNTS_PER_REV2 1107
+#define COUNTS_PER_REV3 620
+#define COUNTS_PER_REV4 620
 #define WHEEL_DIAMETER 0.0675               
-#define LR_WHEELS_DISTANCE 0.126            
-#define PWM_BITS 8                         
-#define PWM_FREQUENCY 8000
+#define LR_WHEELS_DISTANCE 0.237            
+#define PWM_BITS 12          
+#define PWM_FREQUENCY 16000
+
+#define MOTOR2_ENCODER_INV false
+#define MOTOR1_ENCODER_INV false
+#define MOTOR3_ENCODER_INV false 
+#define MOTOR4_ENCODER_INV false 
+
+#define MOTOR1_INV false
+#define MOTOR2_INV false
+#define MOTOR3_INV false
+#define MOTOR4_INV false
 
 // Fixed pin numbers for ESP32-WROOM-32D 38 PIN VERSION
 /// ENCODER PINS
-#define MOTOR1_ENCODER_A 5
-#define MOTOR1_ENCODER_B 17 
-#define MOTOR1_ENCODER_INV false 
 
-#define MOTOR2_ENCODER_A 19
-#define MOTOR2_ENCODER_B 18 
-#define MOTOR2_ENCODER_INV false 
+#define MOTOR1_ENCODER_A 35
+#define MOTOR1_ENCODER_B 34 
+
+#define MOTOR2_ENCODER_A 18 
+#define MOTOR2_ENCODER_B 19 
 
 #define MOTOR3_ENCODER_A 17
 #define MOTOR3_ENCODER_B 16 
-#define MOTOR3_ENCODER_INV true 
 
 #define MOTOR4_ENCODER_A 1
 #define MOTOR4_ENCODER_B 3
-#define MOTOR4_ENCODER_INV false 
 
 // Motor Pins
 #define MOTOR1_PWM 12
-#define MOTOR1_IN_A 14
-#define MOTOR1_IN_B 27 
-#define MOTOR1_INV true
+#define MOTOR1_IN_A 26
+#define MOTOR1_IN_B 25 
 
-#define MOTOR2_PWM 26
-#define MOTOR2_IN_A 25
-#define MOTOR2_IN_B 33 
-#define MOTOR2_INV true
+#define MOTOR2_PWM 13
+#define MOTOR2_IN_A 14
+#define MOTOR2_IN_B 27 
 
 #define MOTOR3_PWM 32
 #define MOTOR3_IN_A 33
-#define MOTOR3_IN_B -1
-#define MOTOR3_INV false
+#define MOTOR3_IN_B 15
 
 #define MOTOR4_PWM 34
 #define MOTOR4_IN_A 35
-#define MOTOR4_IN_B -1
-#define MOTOR4_INV false
+#define MOTOR4_IN_B 36
 
 #define PWM_MAX pow(2, PWM_BITS) - 1
 #define PWM_MIN -(pow(2, PWM_BITS) - 1)
-#define USE_WIFI_TRANSPORT
-#define AGENT_IP { 192, 168, 1, 100 }  // eg IP of the desktop computer
+//#define USE_WIFI_TRANSPORT
+#define AGENT_IP { 192, 168, 0, 179 }  // eg IP of the desktop computer
 #define AGENT_PORT 8888
 // Enable WiFi with null terminated list of multiple APs SSID and password
-#define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
+#define WIFI_AP_LIST {{"UPC0678289", "x24_$5N9?QxT"}, {NULL}}
 #define WIFI_MONITOR 2 // min. period to send wifi signal strength to syslog
-// #define USE_ARDUINO_OTA
+//#define USE_ARDUINO_OTA
 #define USE_SYSLOG
-#define SYSLOG_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
+#define SYSLOG_SERVER { 192, 168, 0, 171 }  // eg IP of the desktop computer
 #define SYSLOG_PORT 514
 #define DEVICE_HOSTNAME "linorobot2"
 #define APP_NAME "hardware"
+#define USE_SHORT_BRAKE
 #endif

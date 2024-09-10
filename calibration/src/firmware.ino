@@ -16,6 +16,7 @@
 #include <micro_ros_platformio.h>
 #include <stdio.h>
 
+
 #include <nav_msgs/msg/odometry.h>
 #include <sensor_msgs/msg/imu.h>
 #include <sensor_msgs/msg/magnetic_field.h>
@@ -23,10 +24,10 @@
 #include <sensor_msgs/msg/range.h>
 #include <geometry_msgs/msg/twist.h>
 #include <geometry_msgs/msg/vector3.h>
-#include "config.h"
-#include "motor.h"
 #include "pid.h"
 
+#include "config.h"
+#include "motor.h"
 #define ENCODER_USE_INTERRUPTS
 #define ENCODER_OPTIMIZE_INTERRUPTS
 
@@ -205,9 +206,9 @@ void testMotorsWithCmdVel()
     }
     geometry_msgs__msg__Twist twist_msg;
     // set test twist message with x=0.5 fwd full speed
-    twist_msg.linear.x = 0.5;
+    twist_msg.linear.x = 0.0;
     twist_msg.linear.y = 0.0;
-    twist_msg.angular.z = 0.0;
+    twist_msg.angular.z = 0.5;
     unsigned long start_time = micros();
     unsigned long last_status = micros();
     for (int i = 0; i < total_motors; i++)
@@ -252,13 +253,13 @@ void testMotorsWithCmdVel()
 
             // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
             // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
-            Serial.print("req_rpm:: ");
+            Serial.print("reqrpm");
             Serial.print(req_rpm_val);
-            Serial.print(" current_rpm:: ");
+            Serial.print("currentrpm");
             Serial.print(current_rpm);
             int pwm = pids[i]->compute(req_rpm_val, current_rpm);
-            Serial.print(" pwm:: ");
-            Serial.println(pwm);
+//            Serial.print("pwm");
+//            Serial.print(pwm);
             motors[i]->spin(pwm);
             delay(100);
 
